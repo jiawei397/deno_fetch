@@ -178,6 +178,52 @@ Deno.test("error should not cached", async (it) => {
   });
 });
 
+Deno.test("cache not work with cacheTimeout or isUseOrigin", async (it) => {
+  const callStacks: number[] = [];
+  function mock() {
+    mf.install();
+
+    mf.mock("GET@/info/", () => {
+      callStacks.push(2);
+      return new Response(`ok`);
+    });
+  }
+
+  mock();
+
+  await it.step("not cached by set cacheTimeout", async () => {
+    const ajax = new Ajax();
+
+    await ajax.get("http://localhost/info/", null, {
+      cacheTimeout: 0,
+    });
+    assertEquals(callStacks, [2]);
+
+    await ajax.get("http://localhost/info/", null, {
+      cacheTimeout: 0,
+    });
+    assertEquals(callStacks, [2, 2], "will not be cached");
+
+    callStacks.length = 0;
+  });
+
+  await it.step("not cached by set isUseOrigin", async () => {
+    const ajax = new Ajax();
+
+    await ajax.get("http://localhost/info/", null, {
+      isUseOrigin: true,
+    });
+    assertEquals(callStacks, [2]);
+
+    await ajax.get("http://localhost/info/", null, {
+      isUseOrigin: true,
+    });
+    assertEquals(callStacks, [2, 2], "will not be cached");
+
+    callStacks.length = 0;
+  });
+});
+
 Deno.test("use cache store", async (it) => {
   const callStacks: number[] = [];
   function mock() {

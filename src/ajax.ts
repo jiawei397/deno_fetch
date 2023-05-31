@@ -376,6 +376,10 @@ export class Ajax {
     if (cacheTimeout === 0) { // 不缓存结果，也就是说不会过滤掉重复的请求
       return this.core_ajax(mergedConfig);
     }
+    if (mergedConfig.isUseOrigin) {
+      this.logger.warn("使用origin时不允许缓存");
+      return this.core_ajax(mergedConfig);
+    }
     const uniqueKey = this.getUniqueKey(mergedConfig);
     const caches = this.caches;
     const result = caches.get(uniqueKey);
