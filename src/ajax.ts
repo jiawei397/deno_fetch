@@ -223,6 +223,7 @@ export class Ajax {
       defaultPutAndPostContentType,
       defaultInjectHeaderKeys,
       originHeaders,
+      responseHeaderKeys,
       ...otherParams
     } = config;
 
@@ -281,7 +282,17 @@ export class Ajax {
       }
       //以下处理成功的结果
       const result = await response.text();
-      return jsonParse(result);
+      const last = jsonParse(result);
+      const resHeaders: Record<string, string | null> = {};
+      if (responseHeaderKeys) {
+        responseHeaderKeys.forEach((key) => {
+          resHeaders[key] = response.headers.get(key);
+        });
+      }
+      return {
+        data: last,
+        headers: resHeaders,
+      };
     } catch (err) { //代表网络异常
       return Promise.reject(new FetchError(err, FetchErrorType.Network));
     }
@@ -367,7 +378,13 @@ export class Ajax {
 
     return Promise.race([fecthPromise, abortPromise]).then((res) => {
       clearTimeout(tp);
-      return res;
+      if (config.isUseOrigin) {
+        return res;
+      }
+      if (config.responseHeaderKeys) {
+        return res;
+      }
+      return res.data;
     }, (err) => {
       clearTimeout(tp);
       return Promise.reject(err);
@@ -496,6 +513,21 @@ export class Ajax {
     });
   }
 
+  getWithHeaders<T>(url: string, data?: AjaxGetData, options?: AjaxExConfig) {
+    if (!options?.responseHeaderKeys?.length) {
+      throw new Error("responseHeaderKeys 不能为空");
+    }
+    return this.ajax<{
+      data: T;
+      headers: Record<string, string | null>;
+    }>({
+      url,
+      method: "get",
+      data,
+      ...options,
+    });
+  }
+
   /**
    * 调用ajax的get请求的同时，返回取消ajax请求的方法
    */
@@ -509,6 +541,18 @@ export class Ajax {
   }
 
   post<T>(url: string, data: AjaxPostData, options?: AjaxExConfig) {
+    return this.ajax<T>({
+      url,
+      method: "post",
+      data,
+      ...options,
+    });
+  }
+
+  postWithHeaders<T>(url: string, data: AjaxPostData, options?: AjaxExConfig) {
+    if (!options?.responseHeaderKeys?.length) {
+      throw new Error("responseHeaderKeys 不能为空");
+    }
     return this.ajax<T>({
       url,
       method: "post",

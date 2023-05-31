@@ -102,6 +102,7 @@ export interface AjaxExConfig extends RequestConfig {
   originHeaders?: Headers;
   /* 配合originHeaders使用，如果有这几个字段，将会默认注入 */
   defaultInjectHeaderKeys?: string[];
+  responseHeaderKeys?: string[];
 }
 
 export type AjaxGetData =

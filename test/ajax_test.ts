@@ -3,6 +3,7 @@
 import {
   assert,
   assertEquals,
+  assertThrows,
   beforeEach,
   delay,
   describe,
@@ -89,6 +90,116 @@ describe("ajax", () => {
       });
       assertEquals(count, 1);
     });
+  });
+});
+
+Deno.test("test responseHeaderKeys", async (it) => {
+  const callStacks: number[] = [];
+  const result = "ok";
+  function mock() {
+    mf.install();
+
+    mf.mock("GET@/info/", () => {
+      callStacks.push(2);
+      return new Response(result, {
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": "2",
+          "Cache-Control": "no-cache",
+        },
+      });
+    });
+  }
+
+  mock();
+
+  await it.step("responseHeaderKeys response with headers", async () => {
+    const ajax = new Ajax();
+
+    const res = await ajax.get("http://localhost/info/", null, {
+      responseHeaderKeys: ["Content-Type", "Content-Length"],
+    });
+    assertEquals(callStacks, [2]);
+    assertEquals(res, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
+
+    const res2 = await ajax.get("http://localhost/info/", null);
+    assertEquals(callStacks, [2, 2], "will not be cached");
+    assertEquals(res2, result);
+
+    callStacks.length = 0;
+  });
+
+  await it.step("getWithHeaders", async () => {
+    const ajax = new Ajax();
+
+    const res = await ajax.getWithHeaders<string>(
+      "http://localhost/info/",
+      null,
+      {
+        responseHeaderKeys: ["Content-Type", "Content-Length"],
+      },
+    );
+    assertEquals(callStacks, [2]);
+    assertEquals(res, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
+
+    assertThrows(() => {
+      return ajax.getWithHeaders("http://localhost/info/");
+    });
+    callStacks.length = 0;
+  });
+
+  await it.step("getWithHeaders with cache", async () => {
+    const ajax = new Ajax();
+
+    const res = await ajax.getWithHeaders<string>(
+      "http://localhost/info/",
+      null,
+      {
+        responseHeaderKeys: ["Content-Type", "Content-Length"],
+        cacheTimeout: 1000,
+      },
+    );
+    assertEquals(callStacks, [2]);
+    assertEquals(res, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
+
+    const res2 = await ajax.getWithHeaders<string>(
+      "http://localhost/info/",
+      null,
+      {
+        responseHeaderKeys: ["Content-Type", "Content-Length"],
+        cacheTimeout: 1000,
+      },
+    );
+    assertEquals(callStacks, [2]);
+    assertEquals(res2, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
+
+    await delay(1000);
+
+    callStacks.length = 0;
   });
 });
 

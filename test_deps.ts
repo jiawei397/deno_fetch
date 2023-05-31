@@ -5,14 +5,14 @@ export {
   assertStrictEquals,
   assertThrows,
   unreachable,
-} from "https://deno.land/std@0.120.0/testing/asserts.ts";
+} from "https://deno.land/std@0.190.0/testing/asserts.ts";
 
 export {
   afterEach,
   beforeEach,
   describe,
   it,
-} from "https://deno.land/x/test_suite@0.9.0/mod.ts";
+} from "https://deno.land/std@0.190.0/testing/bdd.ts";
 
 import * as mf from "https://deno.land/x/mock_fetch@0.2.0/mod.ts";
 
@@ -24,4 +24,4 @@ export {
   dirname,
   fromFileUrl,
   resolve,
-} from "https://deno.land/std@0.120.0/path/mod.ts";
+} from "https://deno.land/std@0.190.0/path/mod.ts";
