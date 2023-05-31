@@ -30,18 +30,31 @@ class Interceptors<T extends Function> {
   }
 }
 
+export enum FetchErrorType {
+  Network = "network",
+  // Abort = "abort", // 不存在外部手动取消的情况
+  Timeout = "timeout",
+  HTTP = "http",
+}
+
 export class FetchError extends Error {
-  status?: number; // status code
   name = "FetchError";
+  type: FetchErrorType;
+  status?: number; // status code
   originError?: Error;
 
-  constructor(message: string | Error | undefined, status?: number) {
+  constructor(
+    message: string | Error | undefined,
+    type: FetchErrorType,
+    status?: number,
+  ) {
     super(message instanceof Error ? message.message : message);
     if (message instanceof Error) {
       this.stack = message.stack;
       this.cause = message.cause;
       this.originError = message;
     }
+    this.type = type;
     this.status = status;
   }
 }
@@ -258,7 +271,9 @@ export class Ajax {
           }
           const msg = await response.text();
           const errMsg = msg || response.statusText;
-          return Promise.reject(new FetchError(errMsg, response.status));
+          return Promise.reject(
+            new FetchError(errMsg, FetchErrorType.HTTP, response.status),
+          );
         }
       }
       if (isUseOrigin) {
@@ -268,7 +283,7 @@ export class Ajax {
       const result = await response.text();
       return jsonParse(result);
     } catch (err) { //代表网络异常
-      return Promise.reject(new FetchError(err));
+      return Promise.reject(new FetchError(err, FetchErrorType.Network));
     }
   }
 
@@ -341,7 +356,11 @@ export class Ajax {
       tp = setTimeout(() => {
         this.abort(controller);
         reject(
-          new FetchError(config.timeoutErrorMessage, config.timeoutErrorStatus),
+          new FetchError(
+            config.timeoutErrorMessage,
+            FetchErrorType.Timeout,
+            config.timeoutErrorStatus,
+          ),
         );
       }, timeout);
     });
