@@ -1,0 +1,8 @@
+{
+  "name": "jwfetch",
+  "version": "0.0.1",
+  "lock": false,
+  "tasks": {
+    "test": "deno test --allow-read"
+  }
+}
