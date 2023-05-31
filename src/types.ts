@@ -1,4 +1,6 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any no-explicit-any
+import { FetchError } from "../mod.ts";
+
 export type Method =
   | "get"
   | "GET"
@@ -124,7 +126,7 @@ export interface AjaxConfig extends AjaxExConfig {
 
 export type RequestCallback = (config: AjaxConfig) => AjaxConfig;
 
-export type ErrorCallback = (error: Error) => Promise<Error>;
+export type ErrorCallback = (error: FetchError) => Promise<Error>;
 
 export type ResponseCallback = (data: any) => Promise<any>;
 

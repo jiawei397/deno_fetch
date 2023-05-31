@@ -19,7 +19,7 @@ ajax.interceptors.response.use(function (data) {
   // return data.slice(0, 10);
   return data;
 }, function (err: FetchError) {
-  console.log("-----error", err);
+  console.log("-----error", err.message, err);
   return Promise.reject(err);
 });
 
