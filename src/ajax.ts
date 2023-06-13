@@ -42,6 +42,7 @@ export class FetchError extends Error {
   type: FetchErrorType;
   status?: number; // status code
   originError?: Error;
+  cause: any;
 
   constructor(
     message: string | Error | undefined,

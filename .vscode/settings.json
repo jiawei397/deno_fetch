@@ -1,4 +1,12 @@
 {
+    "deno.enable": true,
+    "deno.lint": true,
+    "deno.config": "./deno.json",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "denoland.vscode-deno",
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "denoland.vscode-deno"
+    },
     "deno.suggest.imports.hosts": {
         "https://deno.land": false
     }

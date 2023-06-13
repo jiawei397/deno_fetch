@@ -4,5 +4,8 @@
   "tasks": {
     "test": "deno test --allow-read",
     "dev": "deno run -A example.ts"
+  },
+  "compilerOptions": {
+    "lib": ["esnext", "deno.window"]
   }
 }
