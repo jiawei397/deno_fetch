@@ -91,6 +91,10 @@ export class Ajax {
 
   public caches = new Map(); // 缓存所有已经请求的Promise，同一时间重复的不再请求
 
+  public cachesTimeoutKeyMap = new Map<string, number>(); // 用于存储缓存的key的过期时间
+  public revalidateCacheTimeoutKeyMap = new Map<string, number>(); // 用于存储需要重新请求的key的过期时间
+  public fetchTimeoutKeys = new Set<number>(); // 用于存储fetch的key的过期时间
+
   protected getUniqueKey(config: AjaxConfig) {
     const headers = config.headers;
     const keys = [
@@ -133,6 +137,25 @@ export class Ajax {
     for (const cache of this.caches.values()) {
       this.abort(cache.controller);
     }
+    this.clearAllTimeout();
+  }
+
+  /**
+   * 清除所有缓存的timeout
+   */
+  clearAllTimeout() {
+    for (const timeout of this.cachesTimeoutKeyMap.values()) {
+      clearTimeout(timeout);
+    }
+    this.cachesTimeoutKeyMap.clear();
+    for (const timeout of this.revalidateCacheTimeoutKeyMap.values()) {
+      clearTimeout(timeout);
+    }
+    this.revalidateCacheTimeoutKeyMap.clear();
+    for (const timeout of this.fetchTimeoutKeys.values()) {
+      clearTimeout(timeout);
+    }
+    this.fetchTimeoutKeys.clear();
   }
 
   private handleGetUrl(url: string, data: AjaxGetData, isEncodeUrl?: boolean) {
@@ -342,9 +365,11 @@ export class Ajax {
   private clearCacheByKey(uniqueKey: string, cacheTimeout?: number) {
     if (cacheTimeout !== undefined) {
       if (cacheTimeout >= 0) { // 如果小于0，不清除
-        setTimeout(() => {
+        const t = setTimeout(() => {
           this.caches.delete(uniqueKey);
+          this.cachesTimeoutKeyMap.delete(uniqueKey);
         }, cacheTimeout);
+        this.cachesTimeoutKeyMap.set(uniqueKey, t);
       }
     } else {
       this.caches.delete(uniqueKey);
@@ -362,11 +387,12 @@ export class Ajax {
     controller: AbortController | undefined,
     config: AjaxConfig,
   ) {
-    let tp: any;
+    let tp: number;
     const timeout = config.timeout;
     const abortPromise = new Promise((_resolve, reject) => {
       tp = setTimeout(() => {
         this.abort(controller);
+        this.fetchTimeoutKeys.delete(tp);
         reject(
           new FetchError(
             config.timeoutErrorMessage,
@@ -375,10 +401,12 @@ export class Ajax {
           ),
         );
       }, timeout);
+      this.fetchTimeoutKeys.add(tp);
     });
 
     return Promise.race([fecthPromise, abortPromise]).then((res) => {
       clearTimeout(tp);
+      this.fetchTimeoutKeys.delete(tp);
       if (config.isUseOrigin) {
         return res;
       }
@@ -388,6 +416,7 @@ export class Ajax {
       return res.data;
     }, (err) => {
       clearTimeout(tp);
+      this.fetchTimeoutKeys.delete(tp);
       return Promise.reject(err);
     });
   }
@@ -407,7 +436,7 @@ export class Ajax {
   /**
    * 缓存请求，同一时间同一请求只会向后台发送一次
    */
-  private cache_ajax(cfg: AjaxConfig): AjaxResult {
+  private cache_ajax(cfg: AjaxConfig, isRevalidate: boolean): AjaxResult {
     const mergedConfig = this.mergeConfig(cfg);
     const { cacheTimeout, cacheStore, isDebug } = mergedConfig;
     if (cacheTimeout === 0) { // 不缓存结果，也就是说不会过滤掉重复的请求
@@ -419,69 +448,80 @@ export class Ajax {
     }
     const uniqueKey = this.getUniqueKey(mergedConfig);
     const caches = this.caches;
-    const result = caches.get(uniqueKey);
-    if (result !== undefined) {
+    const cacheResult = caches.get(uniqueKey);
+    const result: AjaxResult = {
+      promise: Promise.resolve(
+        isRevalidate ? null : (cacheResult || cacheStore?.get(uniqueKey)),
+      ),
+      config: mergedConfig,
+    };
+    if (cacheResult !== undefined && cacheResult !== null) {
       if (isDebug) {
         this.logger.debug(`read from cache : ${uniqueKey}`);
       }
       result.isFromMemoryCache = true;
-      return result;
     }
-    if (cacheStore) { // 有cacheStore，处理要复杂一些，先缓存到内存，等成功后再注入到store中
-      const result: AjaxResult = {
-        promise: Promise.resolve(cacheStore.get(uniqueKey)),
-        config: mergedConfig,
-      };
-      result.promise = result.promise.then((res) => {
-        if (res !== undefined && res !== null) {
+    result.promise = result.promise.then((res) => {
+      if (res !== undefined && res !== null) { // 读取到了缓存
+        if (cacheStore && !result.isFromMemoryCache) {
           if (isDebug) {
             this.logger.debug(`read from cacheStore : ${uniqueKey}`);
           }
           result.isFromStoreCache = true;
-          return res;
         }
-        const coreResult = this.core_ajax(mergedConfig);
-        return coreResult.promise;
-      }).then(async (res) => {
-        if (!result.isFromStoreCache) {
-          try {
-            await cacheStore.set(
-              uniqueKey,
-              res,
-              mergedConfig.cacheTimeout
-                ? {
-                  ttl: mergedConfig.cacheTimeout / 1000, // ttl单位设定为秒
-                }
-                : undefined,
-            );
-          } catch (err) {
-            this.logger.error(`cache set ${uniqueKey} error`, err);
+        if (mergedConfig.revalidateTime !== undefined) { // 如果设置了revalidateTime，那么隔一段时间重新请求一次
+          if (!this.revalidateCacheTimeoutKeyMap.has(uniqueKey)) {
+            const t = this.cachesTimeoutKeyMap.get(uniqueKey);
+            if (t) {
+              clearTimeout(t);
+              this.cachesTimeoutKeyMap.delete(uniqueKey);
+            }
+            const t2 = setTimeout(() => {
+              this.cache_ajax(cfg, true).promise.finally(() => {
+                this.revalidateCacheTimeoutKeyMap.delete(uniqueKey);
+              });
+            }, mergedConfig.revalidateTime);
+            this.revalidateCacheTimeoutKeyMap.set(uniqueKey, t2);
           }
         }
+        return res;
+      }
+      const coreResult = this.core_ajax(mergedConfig);
+      return coreResult.promise;
+    }).then(async (res) => {
+      if (!result.isFromStoreCache && cacheStore) { // 缓存不是从cacheStore读取的，那么就缓存到cacheStore
+        try {
+          await cacheStore.set(
+            uniqueKey,
+            res,
+            mergedConfig.cacheTimeout
+              ? {
+                ttl: mergedConfig.cacheTimeout / 1000, // ttl单位设定为秒
+              }
+              : undefined,
+          );
+        } catch (err) {
+          this.logger.error(`cacheStore set ${uniqueKey} error`, err);
+        }
+      }
+      if (cacheStore) {
         this.clearCacheByKey(uniqueKey); // 成功后在内存中删除
-        return res;
-      }, (err) => {
-        this.clearCacheByKey(uniqueKey); // 错误不缓存
-        return Promise.reject(err);
-      });
-      caches.set(uniqueKey, result);
-      return result;
-    } else {
-      const result = this.core_ajax(mergedConfig);
-      result.promise = result.promise.then((res) => {
-        this.clearCacheByKey(uniqueKey, mergedConfig.cacheTimeout);
-        return res;
-      }, (err) => {
-        this.clearCacheByKey(uniqueKey); // 错误不缓存
-        return Promise.reject(err);
-      });
-      caches.set(uniqueKey, result);
-      return result;
-    }
+      } else {
+        if (!result.isFromMemoryCache) {
+          this.clearCacheByKey(uniqueKey, mergedConfig.cacheTimeout);
+        }
+      }
+      return res;
+    }, (err) => {
+      this.clearCacheByKey(uniqueKey); // 错误不缓存
+      return Promise.reject(err);
+    });
+    caches.set(uniqueKey, result.promise);
+    return result;
   }
 
   all_ajax(cfg: AjaxConfig): AjaxResult {
-    return this.cache_ajax(cfg);
+    return this.cache_ajax(cfg, false);
   }
 
   /**

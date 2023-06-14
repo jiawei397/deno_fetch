@@ -1,27 +1,8 @@
 // deno-lint-ignore-file no-explicit-any no-explicit-any
 import { FetchError } from "../mod.ts";
 
-export type Method =
-  | "get"
-  | "GET"
-  | "delete"
-  | "DELETE"
-  | "head"
-  | "HEAD"
-  | "options"
-  | "OPTIONS"
-  | "post"
-  | "POST"
-  | "put"
-  | "PUT"
-  | "patch"
-  | "PATCH"
-  | "purge"
-  | "PURGE"
-  | "link"
-  | "LINK"
-  | "unlink"
-  | "UNLINK";
+type MethodLowerCase = "get" | "delete" | "post" | "put";
+export type Method = Uppercase<MethodLowerCase> | MethodLowerCase;
 
 export type Credentials = "omit" | "include" | "same-origin";
 
@@ -105,6 +86,8 @@ export interface AjaxExConfig extends RequestConfig {
   /* 配合originHeaders使用，如果有这几个字段，将会默认注入 */
   defaultInjectHeaderKeys?: string[];
   responseHeaderKeys?: string[];
+  /** 背后继续调用接口，更新缓存的时间间隔，默认不更新缓存 */
+  revalidateTime?: number;
 }
 
 export type AjaxGetData =

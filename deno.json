@@ -2,7 +2,7 @@
   "name": "jwfetch",
   "version": "1.0.0",
   "tasks": {
-    "test": "deno test --allow-read",
+    "test": "DEBUG=true deno test --allow-read --trace-ops",
     "dev": "deno run -A example.ts"
   },
   "compilerOptions": {
