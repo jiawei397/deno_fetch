@@ -477,9 +477,17 @@ export class Ajax {
               this.cachesTimeoutKeyMap.delete(uniqueKey);
             }
             const t2 = setTimeout(() => {
-              this.cache_ajax(cfg, true).promise.finally(() => {
-                this.revalidateCacheTimeoutKeyMap.delete(uniqueKey);
-              });
+              this.cache_ajax(cfg, true).promise
+                .catch((err) => {
+                  this.logger.error(
+                    `Revalidate caused error, config: ${
+                      JSON.stringify(cfg)
+                    }, uniqueKey: ${uniqueKey}, error: ${err.stack}`,
+                  );
+                })
+                .finally(() => {
+                  this.revalidateCacheTimeoutKeyMap.delete(uniqueKey);
+                });
             }, mergedConfig.revalidateTime);
             this.revalidateCacheTimeoutKeyMap.set(uniqueKey, t2);
           }
