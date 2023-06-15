@@ -275,3 +275,11 @@ export class LocalStore implements ICacheStore {
   }
 }
 ```
+
+### revalidateTime
+
+Type: `number`
+
+`revalidateTime`是指在缓存仍在有效期时，后台重新请求接口以更新缓存的时间间隔。单位是ms。
+
+如果配置了`revalidateTime`，会优先响应缓存，适用于对实时性没有那么高的特殊场景，比如官网。
