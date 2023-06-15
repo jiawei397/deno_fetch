@@ -10,330 +10,330 @@ import {
   it,
   mf,
 } from "../test_deps.ts";
-import { AjaxConfig, ICacheStore, Method } from "../mod.ts";
-import { Ajax } from "../src/ajax.ts";
-import { LocalStore, LocalValue } from "../src/store.ts";
+import { AjaxConfig, ICacheStore, Method } from "./types.ts";
+import { Ajax } from "./ajax.ts";
+import { LocalStore, LocalValue } from "./store.ts";
 
-// describe("ajax", () => {
-//   function mock() {
-//     mf.install();
+describe("ajax", () => {
+  function mock() {
+    mf.install();
 
-//     mf.mock("GET@/api/", () => {
-//       return new Response(`ok`, {
-//         status: 200,
-//       });
-//     });
-//   }
+    mf.mock("GET@/api/", () => {
+      return new Response(`ok`, {
+        status: 200,
+      });
+    });
+  }
 
-//   mock();
+  mock();
 
-//   let ajax: Ajax;
+  let ajax: Ajax;
 
-//   beforeEach(() => {
-//     ajax = new Ajax();
-//   });
+  beforeEach(() => {
+    ajax = new Ajax();
+  });
 
-//   const request = () => ajax.get("http://localhost/api/");
+  const request = () => ajax.get("http://localhost/api/");
 
-//   describe("request and response count", () => {
-//     let requestCount = 0;
-//     let responseCount = 0;
+  describe("request and response count", () => {
+    let requestCount = 0;
+    let responseCount = 0;
 
-//     beforeEach(() => {
-//       requestCount = 0;
-//       responseCount = 0;
+    beforeEach(() => {
+      requestCount = 0;
+      responseCount = 0;
 
-//       ajax.interceptors.request.use(function (mergedConfig) {
-//         requestCount++;
-//         return mergedConfig;
-//       }, function (err) {
-//         requestCount++;
-//         return Promise.reject(err);
-//       });
+      ajax.interceptors.request.use(function (mergedConfig) {
+        requestCount++;
+        return mergedConfig;
+      }, function (err) {
+        requestCount++;
+        return Promise.reject(err);
+      });
 
-//       // 响应拦截
-//       ajax.interceptors.response.use(function (data) {
-//         responseCount++;
-//         return data;
-//       }, function (err) {
-//         responseCount++;
-//         return Promise.reject(err);
-//       });
-//     });
+      // 响应拦截
+      ajax.interceptors.response.use(function (data) {
+        responseCount++;
+        return data;
+      }, function (err) {
+        responseCount++;
+        return Promise.reject(err);
+      });
+    });
 
-//     it("once", async () => {
-//       assertEquals(requestCount, 0);
-//       assertEquals(responseCount, 0);
+    it("once", async () => {
+      assertEquals(requestCount, 0);
+      assertEquals(responseCount, 0);
 
-//       await request();
-//       assertEquals(requestCount, 1);
-//       assertEquals(responseCount, 1);
-//     });
+      await request();
+      assertEquals(requestCount, 1);
+      assertEquals(responseCount, 1);
+    });
 
-//     it("many", async () => {
-//       assertEquals(requestCount, 0);
-//       assertEquals(responseCount, 0);
+    it("many", async () => {
+      assertEquals(requestCount, 0);
+      assertEquals(responseCount, 0);
 
-//       for (let i = 0; i < 5; i++) {
-//         await request();
-//       }
-//       assertEquals(requestCount, 5);
-//       assertEquals(responseCount, 5);
-//     });
-//   });
+      for (let i = 0; i < 5; i++) {
+        await request();
+      }
+      assertEquals(requestCount, 5);
+      assertEquals(responseCount, 5);
+    });
+  });
 
-//   describe("response count", () => {
-//     it("once", async () => {
-//       let count = 0;
-//       await request().then(() => {
-//         count++;
-//       });
-//       assertEquals(count, 1);
-//     });
-//   });
-// });
+  describe("response count", () => {
+    it("once", async () => {
+      let count = 0;
+      await request().then(() => {
+        count++;
+      });
+      assertEquals(count, 1);
+    });
+  });
+});
 
-// Deno.test("test responseHeaderKeys", async (it) => {
-//   const callStacks: number[] = [];
-//   const result = "ok";
-//   function mock() {
-//     mf.install();
+Deno.test("test responseHeaderKeys", async (it) => {
+  const callStacks: number[] = [];
+  const result = "ok";
+  function mock() {
+    mf.install();
 
-//     mf.mock("GET@/info/", () => {
-//       callStacks.push(2);
-//       return new Response(result, {
-//         headers: {
-//           "Content-Type": "application/json",
-//           "Content-Length": "2",
-//           "Cache-Control": "no-cache",
-//         },
-//       });
-//     });
-//   }
+    mf.mock("GET@/info/", () => {
+      callStacks.push(2);
+      return new Response(result, {
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": "2",
+          "Cache-Control": "no-cache",
+        },
+      });
+    });
+  }
 
-//   mock();
+  mock();
 
-//   await it.step("responseHeaderKeys response with headers", async () => {
-//     const ajax = new Ajax();
+  await it.step("responseHeaderKeys response with headers", async () => {
+    const ajax = new Ajax();
 
-//     const res = await ajax.get("http://localhost/info/", null, {
-//       responseHeaderKeys: ["Content-Type", "Content-Length"],
-//     });
-//     assertEquals(callStacks, [2]);
-//     assertEquals(res, {
-//       data: result,
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Content-Length": "2",
-//       },
-//     });
+    const res = await ajax.get("http://localhost/info/", null, {
+      responseHeaderKeys: ["Content-Type", "Content-Length"],
+    });
+    assertEquals(callStacks, [2]);
+    assertEquals(res, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
 
-//     const res2 = await ajax.get("http://localhost/info/", null);
-//     assertEquals(callStacks, [2, 2], "will not be cached");
-//     assertEquals(res2, result);
+    const res2 = await ajax.get("http://localhost/info/", null);
+    assertEquals(callStacks, [2, 2], "will not be cached");
+    assertEquals(res2, result);
 
-//     callStacks.length = 0;
-//   });
+    callStacks.length = 0;
+  });
 
-//   await it.step("getWithHeaders", async () => {
-//     const ajax = new Ajax();
+  await it.step("getWithHeaders", async () => {
+    const ajax = new Ajax();
 
-//     const res = await ajax.getWithHeaders<string>(
-//       "http://localhost/info/",
-//       null,
-//       {
-//         responseHeaderKeys: ["Content-Type", "Content-Length"],
-//       },
-//     );
-//     assertEquals(callStacks, [2]);
-//     assertEquals(res, {
-//       data: result,
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Content-Length": "2",
-//       },
-//     });
+    const res = await ajax.getWithHeaders<string>(
+      "http://localhost/info/",
+      null,
+      {
+        responseHeaderKeys: ["Content-Type", "Content-Length"],
+      },
+    );
+    assertEquals(callStacks, [2]);
+    assertEquals(res, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
 
-//     assertThrows(() => {
-//       return ajax.getWithHeaders("http://localhost/info/");
-//     });
-//     callStacks.length = 0;
-//   });
+    assertThrows(() => {
+      return ajax.getWithHeaders("http://localhost/info/");
+    });
+    callStacks.length = 0;
+  });
 
-//   await it.step("getWithHeaders with cache", async () => {
-//     const ajax = new Ajax();
+  await it.step("getWithHeaders with cache", async () => {
+    const ajax = new Ajax();
 
-//     const res = await ajax.getWithHeaders<string>(
-//       "http://localhost/info/",
-//       null,
-//       {
-//         responseHeaderKeys: ["Content-Type", "Content-Length"],
-//         cacheTimeout: 1000,
-//       },
-//     );
-//     assertEquals(callStacks, [2]);
-//     assertEquals(res, {
-//       data: result,
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Content-Length": "2",
-//       },
-//     });
+    const res = await ajax.getWithHeaders<string>(
+      "http://localhost/info/",
+      null,
+      {
+        responseHeaderKeys: ["Content-Type", "Content-Length"],
+        cacheTimeout: 1000,
+      },
+    );
+    assertEquals(callStacks, [2]);
+    assertEquals(res, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
 
-//     const res2 = await ajax.getWithHeaders<string>(
-//       "http://localhost/info/",
-//       null,
-//       {
-//         responseHeaderKeys: ["Content-Type", "Content-Length"],
-//         cacheTimeout: 1000,
-//       },
-//     );
-//     assertEquals(callStacks, [2]);
-//     assertEquals(res2, {
-//       data: result,
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Content-Length": "2",
-//       },
-//     });
+    const res2 = await ajax.getWithHeaders<string>(
+      "http://localhost/info/",
+      null,
+      {
+        responseHeaderKeys: ["Content-Type", "Content-Length"],
+        cacheTimeout: 1000,
+      },
+    );
+    assertEquals(callStacks, [2]);
+    assertEquals(res2, {
+      data: result,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+      },
+    });
 
-//     await delay(1000);
+    await delay(1000);
 
-//     callStacks.length = 0;
-//   });
-// });
+    callStacks.length = 0;
+  });
+});
 
-// Deno.test("error", async (it) => {
-//   function mock() {
-//     mf.install();
+Deno.test("error", async (it) => {
+  function mock() {
+    mf.install();
 
-//     mf.mock("POST@/error/", () => {
-//       return new Response(`ok`, {
-//         status: 401,
-//       });
-//     });
+    mf.mock("POST@/error/", () => {
+      return new Response(`ok`, {
+        status: 401,
+      });
+    });
 
-//     mf.mock("GET@/error/", () => {
-//       return new Response(`ok`, {
-//         status: 401,
-//       });
-//     });
-//   }
+    mf.mock("GET@/error/", () => {
+      return new Response(`ok`, {
+        status: 401,
+      });
+    });
+  }
 
-//   mock();
+  mock();
 
-//   await it.step("request and response", async () => {
-//     const ajax = new Ajax();
-//     const callStacks: number[] = [];
-//     await ajax.post("http://localhost/error/", {}).catch(() => {
-//       callStacks.push(1);
-//     });
-//     assertEquals(callStacks, [1]);
+  await it.step("request and response", async () => {
+    const ajax = new Ajax();
+    const callStacks: number[] = [];
+    await ajax.post("http://localhost/error/", {}).catch(() => {
+      callStacks.push(1);
+    });
+    assertEquals(callStacks, [1]);
 
-//     await ajax.get("http://localhost/error/").catch(() => {
-//       callStacks.push(2);
-//     });
-//     assertEquals(callStacks, [1, 2]);
-//   });
-// });
+    await ajax.get("http://localhost/error/").catch(() => {
+      callStacks.push(2);
+    });
+    assertEquals(callStacks, [1, 2]);
+  });
+});
 
-// Deno.test("error should not cached", async (it) => {
-//   const callStacks: number[] = [];
-//   function mock() {
-//     mf.install();
+Deno.test("error should not cached", async (it) => {
+  const callStacks: number[] = [];
+  function mock() {
+    mf.install();
 
-//     mf.mock("GET@/error2/", () => {
-//       callStacks.push(2);
-//       return new Response(`ok`, {
-//         status: 401,
-//       });
-//     });
-//   }
+    mf.mock("GET@/error2/", () => {
+      callStacks.push(2);
+      return new Response(`ok`, {
+        status: 401,
+      });
+    });
+  }
 
-//   mock();
+  mock();
 
-//   await it.step("not cached", async () => {
-//     const ajax = new Ajax();
+  await it.step("not cached", async () => {
+    const ajax = new Ajax();
 
-//     await ajax.get("http://localhost/error2/").catch(() => {
-//       callStacks.push(1);
-//     });
-//     assertEquals(callStacks, [2, 1]);
+    await ajax.get("http://localhost/error2/").catch(() => {
+      callStacks.push(1);
+    });
+    assertEquals(callStacks, [2, 1]);
 
-//     await ajax.get("http://localhost/error2/").catch(() => {
-//       callStacks.push(3);
-//     });
-//     assertEquals(callStacks, [2, 1, 2, 3], "will not be cached");
+    await ajax.get("http://localhost/error2/").catch(() => {
+      callStacks.push(3);
+    });
+    assertEquals(callStacks, [2, 1, 2, 3], "will not be cached");
 
-//     callStacks.length = 0;
-//   });
+    callStacks.length = 0;
+  });
 
-//   await it.step("not cached by set cachetimeout", async () => {
-//     const ajax = new Ajax();
+  await it.step("not cached by set cachetimeout", async () => {
+    const ajax = new Ajax();
 
-//     await ajax.get("http://localhost/error2/", null, {
-//       cacheTimeout: 1000,
-//     }).catch(() => {
-//       callStacks.push(1);
-//     });
-//     assertEquals(callStacks, [2, 1]);
+    await ajax.get("http://localhost/error2/", null, {
+      cacheTimeout: 1000,
+    }).catch(() => {
+      callStacks.push(1);
+    });
+    assertEquals(callStacks, [2, 1]);
 
-//     await ajax.get("http://localhost/error2/", null, {
-//       cacheTimeout: 1000,
-//     }).catch(() => {
-//       callStacks.push(3);
-//     });
-//     assertEquals(callStacks, [2, 1, 2, 3], "will not be cached");
+    await ajax.get("http://localhost/error2/", null, {
+      cacheTimeout: 1000,
+    }).catch(() => {
+      callStacks.push(3);
+    });
+    assertEquals(callStacks, [2, 1, 2, 3], "will not be cached");
 
-//     callStacks.length = 0;
-//   });
-// });
+    callStacks.length = 0;
+  });
+});
 
-// Deno.test("cache not work with cacheTimeout or isUseOrigin", async (it) => {
-//   const callStacks: number[] = [];
-//   function mock() {
-//     mf.install();
+Deno.test("cache not work with cacheTimeout or isUseOrigin", async (it) => {
+  const callStacks: number[] = [];
+  function mock() {
+    mf.install();
 
-//     mf.mock("GET@/info/", () => {
-//       callStacks.push(2);
-//       return new Response(`ok`);
-//     });
-//   }
+    mf.mock("GET@/info/", () => {
+      callStacks.push(2);
+      return new Response(`ok`);
+    });
+  }
 
-//   mock();
+  mock();
 
-//   await it.step("not cached by set cacheTimeout", async () => {
-//     const ajax = new Ajax();
+  await it.step("not cached by set cacheTimeout", async () => {
+    const ajax = new Ajax();
 
-//     await ajax.get("http://localhost/info/", null, {
-//       cacheTimeout: 0,
-//     });
-//     assertEquals(callStacks, [2]);
+    await ajax.get("http://localhost/info/", null, {
+      cacheTimeout: 0,
+    });
+    assertEquals(callStacks, [2]);
 
-//     await ajax.get("http://localhost/info/", null, {
-//       cacheTimeout: 0,
-//     });
-//     assertEquals(callStacks, [2, 2], "will not be cached");
+    await ajax.get("http://localhost/info/", null, {
+      cacheTimeout: 0,
+    });
+    assertEquals(callStacks, [2, 2], "will not be cached");
 
-//     callStacks.length = 0;
-//   });
+    callStacks.length = 0;
+  });
 
-//   await it.step("not cached by set isUseOrigin", async () => {
-//     const ajax = new Ajax();
+  await it.step("not cached by set isUseOrigin", async () => {
+    const ajax = new Ajax();
 
-//     await ajax.get("http://localhost/info/", null, {
-//       isUseOrigin: true,
-//     });
-//     assertEquals(callStacks, [2]);
+    await ajax.get("http://localhost/info/", null, {
+      isUseOrigin: true,
+    });
+    assertEquals(callStacks, [2]);
 
-//     await ajax.get("http://localhost/info/", null, {
-//       isUseOrigin: true,
-//     });
-//     assertEquals(callStacks, [2, 2], "will not be cached");
+    await ajax.get("http://localhost/info/", null, {
+      isUseOrigin: true,
+    });
+    assertEquals(callStacks, [2, 2], "will not be cached");
 
-//     callStacks.length = 0;
-//   });
-// });
+    callStacks.length = 0;
+  });
+});
 
 Deno.test("use cache store", async (it) => {
   const callStacks: number[] = [];

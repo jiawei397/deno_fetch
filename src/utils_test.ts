@@ -1,6 +1,6 @@
 // Copyright 2018-2021 the oak authors. All rights reserved. MIT license.
 import { assert, assertEquals } from "../test_deps.ts";
-import { deleteUndefinedProperty, jsonParse } from "../src/utils.ts";
+import { deleteUndefinedProperty, jsonParse } from "./utils.ts";
 
 const { test } = Deno;
 
