@@ -76,6 +76,7 @@ export class Ajax {
       "x-b3-parentspanid",
       "x-b3-sampled",
     ],
+    isDebug: Deno.env.get("DEBUG") === "true",
   };
 
   private logger: Logger;
@@ -433,6 +434,12 @@ export class Ajax {
     };
   }
 
+  private logDebug(message: string, isDebug?: boolean): void {
+    if (isDebug) {
+      this.logger.debug(message);
+    }
+  }
+
   /**
    * 缓存请求，同一时间同一请求只会向后台发送一次
    */
@@ -456,17 +463,13 @@ export class Ajax {
       config: mergedConfig,
     };
     if (cacheResult !== undefined && cacheResult !== null) {
-      if (isDebug) {
-        this.logger.debug(`read from cache : ${uniqueKey}`);
-      }
+      this.logDebug(`Read from cache : ${uniqueKey}`, isDebug);
       result.isFromMemoryCache = true;
     }
     result.promise = result.promise.then((res) => {
       if (res !== undefined && res !== null) { // 读取到了缓存
         if (cacheStore && !result.isFromMemoryCache) {
-          if (isDebug) {
-            this.logger.debug(`read from cacheStore : ${uniqueKey}`);
-          }
+          this.logDebug(`Read from cacheStore : ${uniqueKey}`, isDebug);
           result.isFromStoreCache = true;
         }
         if (mergedConfig.revalidateTime !== undefined) { // 如果设置了revalidateTime，那么隔一段时间重新请求一次
