@@ -11,7 +11,7 @@ import {
   RequestCallback,
   ResponseCallback,
 } from "./types.ts";
-import { deleteUndefinedProperty, jsonParse, md5 } from "./utils.ts";
+import { deleteUndefinedProperty, md5 } from "./utils.ts";
 
 class Interceptors<T extends Function> {
   chain: any[];
@@ -306,8 +306,8 @@ export class Ajax {
         return response;
       }
       //以下处理成功的结果
-      const result = await response.text();
-      const last = jsonParse(result);
+      const contentType = response.headers.get("content-type");
+      const result = contentType?.includes("application/json") ? await response.json() : await response.text();
       const resHeaders: Record<string, string | null> = {};
       if (responseHeaderKeys) {
         responseHeaderKeys.forEach((key) => {
@@ -315,7 +315,7 @@ export class Ajax {
         });
       }
       return {
-        data: last,
+        data: result,
         headers: resHeaders,
       };
     } catch (err) { //代表网络异常
@@ -483,8 +483,7 @@ export class Ajax {
               this.cache_ajax(cfg, true).promise
                 .catch((err) => {
                   this.logger.error(
-                    `Revalidate caused error, config: ${
-                      JSON.stringify(cfg)
+                    `Revalidate caused error, config: ${JSON.stringify(cfg)
                     }, uniqueKey: ${uniqueKey}, error: ${err.stack}`,
                   );
                 })

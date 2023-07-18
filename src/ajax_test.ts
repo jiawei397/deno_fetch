@@ -93,15 +93,40 @@ describe("ajax", () => {
   });
 });
 
+Deno.test('test response number', async (it) => {
+  function mock() {
+    mf.install();
+    mf.mock("GET@/api/", () => {
+      return new Response('5', {
+        status: 200,
+      });
+    });
+  }
+
+  mock();
+
+  const ajax = new Ajax();
+
+  const request = () => ajax.get("http://localhost/api/");
+
+  await it.step('response number not tranfer', async () => {
+    const res = await request();
+    assertEquals(res, "5");
+    assertEquals(typeof res, 'string');
+  });
+});
+
 Deno.test("test responseHeaderKeys", async (it) => {
   const callStacks: number[] = [];
-  const result = "ok";
+  const result = {
+    name: "test",
+  };
   function mock() {
     mf.install();
 
     mf.mock("GET@/info/", () => {
       callStacks.push(2);
-      return new Response(result, {
+      return new Response(JSON.stringify(result), {
         headers: {
           "Content-Type": "application/json",
           "Content-Length": "2",
@@ -138,7 +163,7 @@ Deno.test("test responseHeaderKeys", async (it) => {
   await it.step("getWithHeaders", async () => {
     const ajax = new Ajax();
 
-    const res = await ajax.getWithHeaders<string>(
+    const res = await ajax.getWithHeaders<{ name: string }>(
       "http://localhost/info/",
       null,
       {
@@ -163,7 +188,7 @@ Deno.test("test responseHeaderKeys", async (it) => {
   await it.step("getWithHeaders with cache", async () => {
     const ajax = new Ajax();
 
-    const res = await ajax.getWithHeaders<string>(
+    const res = await ajax.getWithHeaders<{ name: string }>(
       "http://localhost/info/",
       null,
       {
@@ -180,7 +205,7 @@ Deno.test("test responseHeaderKeys", async (it) => {
       },
     });
 
-    const res2 = await ajax.getWithHeaders<string>(
+    const res2 = await ajax.getWithHeaders<{ name: string }>(
       "http://localhost/info/",
       null,
       {
