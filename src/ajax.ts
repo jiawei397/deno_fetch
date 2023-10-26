@@ -283,9 +283,6 @@ export class Ajax {
         // 状态码不是200到300，代表请求失败
         if (!(Array.isArray(ignore) && ignore.includes(response.status))) {
           // 如果不忽略错误码
-          if (isUseOrigin) {
-            return Promise.reject(response);
-          }
           const msg = await response.text();
           const errMsg = msg || response.statusText;
           return Promise.reject(
