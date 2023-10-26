@@ -88,6 +88,7 @@ export interface AjaxExConfig extends RequestConfig {
   responseHeaderKeys?: string[];
   /** 背后继续调用接口，更新缓存的时间间隔，默认不更新缓存 */
   revalidateTime?: number;
+  logger?: Logger;
 }
 
 export type AjaxGetData =
@@ -96,7 +97,6 @@ export type AjaxGetData =
   | undefined
   | null;
 
-// deno-lint-ignore ban-types
 export type AjaxPostData = object;
 
 export type AjaxData = AjaxGetData | AjaxPostData;
@@ -109,7 +109,9 @@ export interface AjaxConfig extends AjaxExConfig {
 
 export type RequestCallback = (config: AjaxConfig) => AjaxConfig;
 
-export type ErrorCallback = (error: FetchError) => Promise<Error>;
+export type ErrorRequestCallback = (error: Error) => void;
+
+export type ErrorResponseCallback = (error: FetchError) => Promise<any>;
 
 export type ResponseCallback = (data: any) => Promise<any>;
 
@@ -128,7 +130,7 @@ export interface ICacheStore {
     options?: {
       /** ttl should be seconds */
       ttl: number;
-    },
+    }
   ): Promise<any> | any;
 
   delete(key: string): Promise<any> | any;

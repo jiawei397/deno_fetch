@@ -54,7 +54,7 @@ ajax.interceptors.request.use(function (mergedConfig) {
   mergedConfig.headers.token = "abcd";
   return mergedConfig;
 }, function (err) {
-  return Promise.reject(err);
+  throw err;
 });
 
 // 响应拦截

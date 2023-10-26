@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any ban-types
+// deno-lint-ignore-file no-explicit-any
 import {
   AbortResult,
   AjaxConfig,
@@ -6,21 +6,22 @@ import {
   AjaxGetData,
   AjaxPostData,
   AjaxResult,
-  ErrorCallback,
+  ErrorRequestCallback,
+  ErrorResponseCallback,
   Logger,
   RequestCallback,
   ResponseCallback,
 } from "./types.ts";
 import { deleteUndefinedProperty, md5, resolveUrl } from "./utils.ts";
 
-class Interceptors<T extends Function> {
-  chain: any[];
+class Interceptors<T, E> {
+  public chain: any[];
 
   constructor() {
     this.chain = [];
   }
 
-  use(callback: T, errorCallback: ErrorCallback) {
+  use(callback: T, errorCallback: E) {
     this.chain.push(callback, errorCallback);
     return this.chain.length - 2;
   }
@@ -39,20 +40,21 @@ export enum FetchErrorType {
 
 export class FetchError extends Error {
   name = "FetchError";
-  type: FetchErrorType;
-  status?: number; // status code
-  originError?: Error;
+  originError?: any;
   cause: any;
 
   constructor(
-    message: string | Error | undefined,
-    type: FetchErrorType,
-    status?: number
+    message: string | Error | Record<string, any>,
+    public type: FetchErrorType,
+    public config: AjaxConfig,
+    public status?: number
   ) {
-    super(message instanceof Error ? message.message : message);
-    if (message instanceof Error) {
-      this.stack = message.stack;
-      this.cause = message.cause;
+    super(typeof message === "string" ? message : message.message);
+    if (typeof message !== "string") {
+      if (message instanceof Error) {
+        this.stack = message.stack;
+        this.cause = message.cause;
+      }
       this.originError = message;
     }
     this.type = type;
@@ -79,15 +81,17 @@ export class Ajax {
     isDebug: Deno.env.get("DEBUG") === "true",
   };
 
-  private logger: Logger;
+  defaultConfig: AjaxExConfig;
+  logger: Logger;
 
-  constructor(logger?: Logger) {
-    this.logger = logger || console;
+  constructor(defaultConfig?: AjaxExConfig) {
+    this.defaultConfig = { ...Ajax.defaults, ...defaultConfig };
+    this.logger = this.defaultConfig.logger || console;
   }
 
   public interceptors = {
-    request: new Interceptors<RequestCallback>(),
-    response: new Interceptors<ResponseCallback>(),
+    request: new Interceptors<RequestCallback, ErrorRequestCallback>(),
+    response: new Interceptors<ResponseCallback, ErrorResponseCallback>(),
   };
 
   public caches = new Map(); // 缓存所有已经请求的Promise，同一时间重复的不再请求
@@ -285,7 +289,7 @@ export class Ajax {
           const msg = await response.text();
           const errMsg = msg || response.statusText;
           return Promise.reject(
-            new FetchError(errMsg, FetchErrorType.HTTP, response.status)
+            new FetchError(errMsg, FetchErrorType.HTTP, config, response.status)
           );
         }
       }
@@ -309,7 +313,9 @@ export class Ajax {
       };
     } catch (err) {
       //代表网络异常
-      return Promise.reject(new FetchError(err, FetchErrorType.Network));
+      return Promise.reject(
+        new FetchError(err, FetchErrorType.Network, config)
+      );
     }
   }
 
@@ -332,15 +338,13 @@ export class Ajax {
 
   private mergeConfig(cfg: AjaxConfig): AjaxConfig {
     deleteUndefinedProperty(cfg);
-    const config = Object.assign({}, Ajax.defaults, cfg); // 把默认值覆盖了
+    const config = Object.assign({}, this.defaultConfig, cfg); // 把默认值覆盖了
     const chain = this.interceptors.request.chain;
     for (let i = 0; i < chain.length; i += 2) {
       try {
         chain[i](config);
       } catch (e) {
-        this.logger.error(e);
-        chain[i + 1]?.(e); // TODO 这个作用没想好
-        break;
+        chain[i + 1]?.(e);
       }
     }
     return config;
@@ -388,8 +392,9 @@ export class Ajax {
         this.fetchTimeoutKeys.delete(tp);
         reject(
           new FetchError(
-            config.timeoutErrorMessage,
+            config.timeoutErrorMessage!,
             FetchErrorType.Timeout,
+            config,
             config.timeoutErrorStatus
           )
         );
