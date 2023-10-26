@@ -1,5 +1,8 @@
 {
-  "version": "2",
+  "version": "3",
+  "redirects": {
+    "https://crux.land/router@0.0.4": "https://crux.land/api/get/2U528K.ts"
+  },
   "remote": {
     "https://crux.land/api/get/2U528K.ts": "9744f37ac1b0d7255a555788edd1b7677e8b0ed65ca02b596ef2180b4e25c34f",
     "https://deno.land/std@0.190.0/_util/asserts.ts": "178dfc49a464aee693a7e285567b3d0b555dc805ff490505a8aae34f9cfb1462",

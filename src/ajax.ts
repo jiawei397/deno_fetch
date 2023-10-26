@@ -11,7 +11,7 @@ import {
   RequestCallback,
   ResponseCallback,
 } from "./types.ts";
-import { deleteUndefinedProperty, md5 } from "./utils.ts";
+import { deleteUndefinedProperty, md5, resolveUrl } from "./utils.ts";
 
 class Interceptors<T extends Function> {
   chain: any[];
@@ -47,7 +47,7 @@ export class FetchError extends Error {
   constructor(
     message: string | Error | undefined,
     type: FetchErrorType,
-    status?: number,
+    status?: number
   ) {
     super(message instanceof Error ? message.message : message);
     if (message instanceof Error) {
@@ -188,26 +188,11 @@ export class Ajax {
     return tempUrl;
   }
 
-  private handleBaseUrl(url: string, baseURL?: string) {
-    if (url.startsWith("http")) {
-      return url;
-    }
-    if (baseURL) {
-      if (!baseURL.endsWith("/")) {
-        baseURL += "/";
-      }
-      if (url.startsWith("/")) {
-        url = url.substring(1);
-      }
-      return baseURL + url;
-    }
-    return url;
-  }
-
   private handlePostData(data: any, isFile?: boolean) {
     let obj = data;
     if (typeof data === "object") {
-      if (isFile) { //文件上传
+      if (isFile) {
+        //文件上传
         const formData = new FormData(); //构造空对象，下面用append方法赋值。
         for (const key in data) {
           if (!Object.prototype.hasOwnProperty.call(data, key)) {
@@ -252,7 +237,7 @@ export class Ajax {
       ...otherParams
     } = config;
 
-    let tempUrl = this.handleBaseUrl(url, baseURL);
+    let tempUrl = resolveUrl(url, baseURL);
     let body: any;
     if (method.toUpperCase() === "GET") {
       body = null; //get请求不能有body
@@ -265,8 +250,8 @@ export class Ajax {
       if (!isFile) {
         if (method.toUpperCase() === "POST" || method.toUpperCase() === "PUT") {
           if (
-            !Object.keys(headers).find((key) =>
-              key.toLowerCase() === "content-type"
+            !Object.keys(headers).find(
+              (key) => key.toLowerCase() === "content-type"
             )
           ) {
             headers["content-type"] = defaultPutAndPostContentType!;
@@ -290,15 +275,17 @@ export class Ajax {
         credentials,
         ...otherParams,
       });
-      if (!response.ok) { // 状态码不是200到300，代表请求失败
-        if (!(Array.isArray(ignore) && ignore.includes(response.status))) { // 如果不忽略错误码
+      if (!response.ok) {
+        // 状态码不是200到300，代表请求失败
+        if (!(Array.isArray(ignore) && ignore.includes(response.status))) {
+          // 如果不忽略错误码
           if (isUseOrigin) {
             return Promise.reject(response);
           }
           const msg = await response.text();
           const errMsg = msg || response.statusText;
           return Promise.reject(
-            new FetchError(errMsg, FetchErrorType.HTTP, response.status),
+            new FetchError(errMsg, FetchErrorType.HTTP, response.status)
           );
         }
       }
@@ -307,7 +294,9 @@ export class Ajax {
       }
       //以下处理成功的结果
       const contentType = response.headers.get("content-type");
-      const result = contentType?.includes("application/json") ? await response.json() : await response.text();
+      const result = contentType?.includes("application/json")
+        ? await response.json()
+        : await response.text();
       const resHeaders: Record<string, string | null> = {};
       if (responseHeaderKeys) {
         responseHeaderKeys.forEach((key) => {
@@ -318,7 +307,8 @@ export class Ajax {
         data: result,
         headers: resHeaders,
       };
-    } catch (err) { //代表网络异常
+    } catch (err) {
+      //代表网络异常
       return Promise.reject(new FetchError(err, FetchErrorType.Network));
     }
   }
@@ -329,10 +319,11 @@ export class Ajax {
 
   private mergeAbortConfig(
     config: AjaxConfig,
-    signal?: AbortSignal,
+    signal?: AbortSignal
   ): AbortController | undefined {
     let controller;
-    if (typeof AbortController === "function" && signal === undefined) { // 如果要自己控制取消请求，需要自己传递signal，或者使用isReturnAbort参数
+    if (typeof AbortController === "function" && signal === undefined) {
+      // 如果要自己控制取消请求，需要自己传递signal，或者使用isReturnAbort参数
       controller = new AbortController();
       config.signal = controller.signal;
     }
@@ -365,7 +356,8 @@ export class Ajax {
 
   private clearCacheByKey(uniqueKey: string, cacheTimeout?: number) {
     if (cacheTimeout !== undefined) {
-      if (cacheTimeout >= 0) { // 如果小于0，不清除
+      if (cacheTimeout >= 0) {
+        // 如果小于0，不清除
         const t = setTimeout(() => {
           this.caches.delete(uniqueKey);
           this.cachesTimeoutKeyMap.delete(uniqueKey);
@@ -386,7 +378,7 @@ export class Ajax {
   private fetch_timeout(
     fecthPromise: Promise<any>,
     controller: AbortController | undefined,
-    config: AjaxConfig,
+    config: AjaxConfig
   ) {
     let tp: number;
     const timeout = config.timeout;
@@ -398,28 +390,31 @@ export class Ajax {
           new FetchError(
             config.timeoutErrorMessage,
             FetchErrorType.Timeout,
-            config.timeoutErrorStatus,
-          ),
+            config.timeoutErrorStatus
+          )
         );
       }, timeout);
       this.fetchTimeoutKeys.add(tp);
     });
 
-    return Promise.race([fecthPromise, abortPromise]).then((res) => {
-      clearTimeout(tp);
-      this.fetchTimeoutKeys.delete(tp);
-      if (config.isUseOrigin) {
-        return res;
+    return Promise.race([fecthPromise, abortPromise]).then(
+      (res) => {
+        clearTimeout(tp);
+        this.fetchTimeoutKeys.delete(tp);
+        if (config.isUseOrigin) {
+          return res;
+        }
+        if (config.responseHeaderKeys) {
+          return res;
+        }
+        return res.data;
+      },
+      (err) => {
+        clearTimeout(tp);
+        this.fetchTimeoutKeys.delete(tp);
+        return Promise.reject(err);
       }
-      if (config.responseHeaderKeys) {
-        return res;
-      }
-      return res.data;
-    }, (err) => {
-      clearTimeout(tp);
-      this.fetchTimeoutKeys.delete(tp);
-      return Promise.reject(err);
-    });
+    );
   }
 
   private core_ajax(mergedConfig: AjaxConfig): AjaxResult {
@@ -446,7 +441,8 @@ export class Ajax {
   private cache_ajax(cfg: AjaxConfig, isRevalidate: boolean): AjaxResult {
     const mergedConfig = this.mergeConfig(cfg);
     const { cacheTimeout, cacheStore, isDebug } = mergedConfig;
-    if (cacheTimeout === 0) { // 不缓存结果，也就是说不会过滤掉重复的请求
+    if (cacheTimeout === 0) {
+      // 不缓存结果，也就是说不会过滤掉重复的请求
       return this.core_ajax(mergedConfig);
     }
     if (mergedConfig.isUseOrigin) {
@@ -458,7 +454,7 @@ export class Ajax {
     const cacheResult = caches.get(uniqueKey);
     const result: AjaxResult = {
       promise: Promise.resolve(
-        isRevalidate ? null : (cacheResult || cacheStore?.get(uniqueKey)),
+        isRevalidate ? null : cacheResult || cacheStore?.get(uniqueKey)
       ),
       config: mergedConfig,
     };
@@ -466,66 +462,75 @@ export class Ajax {
       this.logDebug(`Read from cache : ${uniqueKey}`, isDebug);
       result.isFromMemoryCache = true;
     }
-    result.promise = result.promise.then((res) => {
-      if (res !== undefined && res !== null) { // 读取到了缓存
-        if (cacheStore && !result.isFromMemoryCache) {
-          this.logDebug(`Read from cacheStore : ${uniqueKey}`, isDebug);
-          result.isFromStoreCache = true;
-        }
-        if (mergedConfig.revalidateTime !== undefined) { // 如果设置了revalidateTime，那么隔一段时间重新请求一次
-          if (!this.revalidateCacheTimeoutKeyMap.has(uniqueKey)) {
-            const t = this.cachesTimeoutKeyMap.get(uniqueKey);
-            if (t) {
-              clearTimeout(t);
-              this.cachesTimeoutKeyMap.delete(uniqueKey);
-            }
-            const t2 = setTimeout(() => {
-              this.cache_ajax(cfg, true).promise
-                .catch((err) => {
-                  this.logger.error(
-                    `Revalidate caused error, config: ${JSON.stringify(cfg)
-                    }, uniqueKey: ${uniqueKey}, error: ${err.stack}`,
-                  );
-                })
-                .finally(() => {
-                  this.revalidateCacheTimeoutKeyMap.delete(uniqueKey);
-                });
-            }, mergedConfig.revalidateTime);
-            this.revalidateCacheTimeoutKeyMap.set(uniqueKey, t2);
+    result.promise = result.promise
+      .then((res) => {
+        if (res !== undefined && res !== null) {
+          // 读取到了缓存
+          if (cacheStore && !result.isFromMemoryCache) {
+            this.logDebug(`Read from cacheStore : ${uniqueKey}`, isDebug);
+            result.isFromStoreCache = true;
           }
-        }
-        return res;
-      }
-      const coreResult = this.core_ajax(mergedConfig);
-      return coreResult.promise;
-    }).then(async (res) => {
-      if (!result.isFromStoreCache && cacheStore) { // 缓存不是从cacheStore读取的，那么就缓存到cacheStore
-        try {
-          await cacheStore.set(
-            uniqueKey,
-            res,
-            mergedConfig.cacheTimeout
-              ? {
-                ttl: mergedConfig.cacheTimeout / 1000, // ttl单位设定为秒
+          if (mergedConfig.revalidateTime !== undefined) {
+            // 如果设置了revalidateTime，那么隔一段时间重新请求一次
+            if (!this.revalidateCacheTimeoutKeyMap.has(uniqueKey)) {
+              const t = this.cachesTimeoutKeyMap.get(uniqueKey);
+              if (t) {
+                clearTimeout(t);
+                this.cachesTimeoutKeyMap.delete(uniqueKey);
               }
-              : undefined,
-          );
-        } catch (err) {
-          this.logger.error(`cacheStore set ${uniqueKey} error`, err);
+              const t2 = setTimeout(() => {
+                this.cache_ajax(cfg, true)
+                  .promise.catch((err) => {
+                    this.logger.error(
+                      `Revalidate caused error, config: ${JSON.stringify(
+                        cfg
+                      )}, uniqueKey: ${uniqueKey}, error: ${err.stack}`
+                    );
+                  })
+                  .finally(() => {
+                    this.revalidateCacheTimeoutKeyMap.delete(uniqueKey);
+                  });
+              }, mergedConfig.revalidateTime);
+              this.revalidateCacheTimeoutKeyMap.set(uniqueKey, t2);
+            }
+          }
+          return res;
         }
-      }
-      if (cacheStore) {
-        this.clearCacheByKey(uniqueKey); // 成功后在内存中删除
-      } else {
-        if (!result.isFromMemoryCache) {
-          this.clearCacheByKey(uniqueKey, mergedConfig.cacheTimeout);
+        const coreResult = this.core_ajax(mergedConfig);
+        return coreResult.promise;
+      })
+      .then(
+        async (res) => {
+          if (!result.isFromStoreCache && cacheStore) {
+            // 缓存不是从cacheStore读取的，那么就缓存到cacheStore
+            try {
+              await cacheStore.set(
+                uniqueKey,
+                res,
+                mergedConfig.cacheTimeout
+                  ? {
+                      ttl: mergedConfig.cacheTimeout / 1000, // ttl单位设定为秒
+                    }
+                  : undefined
+              );
+            } catch (err) {
+              this.logger.error(`cacheStore set ${uniqueKey} error`, err);
+            }
+          }
+          if (cacheStore) {
+            this.clearCacheByKey(uniqueKey); // 成功后在内存中删除
+          } else {
+            if (!result.isFromMemoryCache) {
+              this.clearCacheByKey(uniqueKey, mergedConfig.cacheTimeout);
+            }
+          }
+          return res;
+        },
+        (err) => {
+          this.clearCacheByKey(uniqueKey); // 错误不缓存
+          return Promise.reject(err);
         }
-      }
-      return res;
-    }, (err) => {
-      this.clearCacheByKey(uniqueKey); // 错误不缓存
-      return Promise.reject(err);
-    });
+      );
     caches.set(uniqueKey, result.promise);
     return result;
   }
