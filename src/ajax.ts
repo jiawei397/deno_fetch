@@ -372,12 +372,12 @@ export class Ajax {
 
   /**
    * 实现fetch的timeout 功能
-   * @param fecthPromise fetch
+   * @param fetchPromise fetch
    * @param controller 取消控制器
    * @param config
    */
   private fetch_timeout(
-    fecthPromise: Promise<any>,
+    fetchPromise: Promise<any>,
     controller: AbortController | undefined,
     config: AjaxConfig
   ) {
@@ -399,7 +399,7 @@ export class Ajax {
       this.fetchTimeoutKeys.add(tp);
     });
 
-    return Promise.race([fecthPromise, abortPromise]).then(
+    return Promise.race([fetchPromise, abortPromise]).then(
       (res) => {
         clearTimeout(tp);
         this.fetchTimeoutKeys.delete(tp);
