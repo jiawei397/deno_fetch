@@ -2,6 +2,7 @@
   "name": "@jw397/fetch",
   "version": "2.0.0",
   "exports": "./mod.ts",
+  "license": "MIT",
   "tasks": {
     "test": "deno test --allow-read --allow-env",
     "test:debug": "DEBUG=true deno test --allow-read --allow-env --trace-ops",
