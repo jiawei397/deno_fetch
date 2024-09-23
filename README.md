@@ -1,6 +1,6 @@
-# 封装的fetch
+# 封装的 fetch
 
-[![deno version](https://img.shields.io/badge/deno-^1.33.4-blue?logo=deno)](https://github.com/denoland/deno)
+[![deno version](https://img.shields.io/badge/deno-^1.46.3-blue?logo=deno)](https://github.com/denoland/deno)
 [![Deno](https://github.com/jiawei397/deno_fetch/actions/workflows/deno.yml/badge.svg)](https://github.com/jiawei397/deno_fetch/actions/workflows/deno.yml)
 
 ## 包含功能点
@@ -8,22 +8,22 @@
 - 同一时间段重复请求会被缓存过滤掉
 - timeout
 - 取消请求
-- 支持自定义cache
+- 支持自定义 cache
   store，比如`localStorage`，也可以是实现了`ICacheStore`接口的数据库
 
 ## 使用
 
-### 封装ajax
+### 封装 ajax
 
 ```ts
-import Ajax from "https://deno.land/x/jwfetch@v1.3.1/mod.ts";
+import Ajax from "@jw397/fetch";
 
 Ajax.defaults.baseURL = "/api";
 
 export const ajax = new Ajax();
 ```
 
-默认在同一时间请求的接口（即还没有响应），会过滤掉，只请求一次。规则是对baseURL、url、method、data、headers作为唯一key，代码如下：
+默认在同一时间请求的接口（即还没有响应），会过滤掉，只请求一次。规则是对 baseURL、url、method、data、headers 作为唯一 key，代码如下：
 
 ```ts
 protected getUniqueKey(config: AjaxConfig) {
@@ -49,20 +49,26 @@ protected getUniqueKey(config: AjaxConfig) {
 
 ```ts
 // 请求拦截
-ajax.interceptors.request.use(function (mergedConfig) {
-  mergedConfig.headers = mergedConfig.headers || {};
-  mergedConfig.headers.token = "abcd";
-  return mergedConfig;
-}, function (err) {
-  throw err;
-});
+ajax.interceptors.request.use(
+  function (mergedConfig) {
+    mergedConfig.headers = mergedConfig.headers || {};
+    mergedConfig.headers.token = "abcd";
+    return mergedConfig;
+  },
+  function (err) {
+    throw err;
+  }
+);
 
 // 响应拦截
-ajax.interceptors.response.use(function (data) {
-  return data.slice(0, 10);
-}, function (err) {
-  return Promise.reject(err);
-});
+ajax.interceptors.response.use(
+  function (data) {
+    return data.slice(0, 10);
+  },
+  function (err) {
+    return Promise.reject(err);
+  }
+);
 ```
 
 ### 获取可取消的请求
@@ -77,7 +83,7 @@ promise2.then((result) => console.log(result));
 abort2(); // 取消请求
 ```
 
-## ajax配置项
+## ajax 配置项
 
 ### url
 
@@ -87,13 +93,13 @@ Type: `string`
 
 Type: `string`
 
-一般是get、post
+一般是 get、post
 
 ### baseURL
 
 Type: `string`
 
-请求url的前缀
+请求 url 的前缀
 
 ### headers
 
@@ -111,9 +117,9 @@ Type: `any`
 
 Type: `number`
 
-Default: `2 * 60 * 1000`，2分钟
+Default: `2 * 60 * 1000`，2 分钟
 
-过期时间，单位ms。从请求开始，到这个时间如果接口没有响应，则会返回一个失败的promise。
+过期时间，单位 ms。从请求开始，到这个时间如果接口没有响应，则会返回一个失败的 promise。
 
 ### timeoutErrorMessage
 
@@ -137,9 +143,9 @@ Type: `string`
 
 Default: `include`
 
-- omit：忽略cookie的发送
-- same-origin: 表示cookie只能同域发送，不能跨域发送
-- include: cookie既可以同域发送，也可以跨域发送
+- omit：忽略 cookie 的发送
+- same-origin: 表示 cookie 只能同域发送，不能跨域发送
+- include: cookie 既可以同域发送，也可以跨域发送
 
 ### mode
 
@@ -147,33 +153,33 @@ Type: `string`
 
 Default: `cors`
 
-- same-origin：该模式是不允许跨域的，它需要遵守同源策略，否则浏览器会返回一个error告知不能跨域；其对应的response
-  type为basic。
+- same-origin：该模式是不允许跨域的，它需要遵守同源策略，否则浏览器会返回一个 error 告知不能跨域；其对应的 response
+  type 为 basic。
 - cors:
-  该模式支持跨域请求，顾名思义它是以CORS的形式跨域；当然该模式也可以同域请求不需要后端额外的CORS支持；其对应的response
-  type为cors。
+  该模式支持跨域请求，顾名思义它是以 CORS 的形式跨域；当然该模式也可以同域请求不需要后端额外的 CORS 支持；其对应的 response
+  type 为 cors。
 - no-cors:
-  该模式用于跨域请求但是服务器不带CORS响应头，也就是服务端不支持CORS；这也是fetch的特殊跨域请求方式；其对应的response
-  type为opaque。
+  该模式用于跨域请求但是服务器不带 CORS 响应头，也就是服务端不支持 CORS；这也是 fetch 的特殊跨域请求方式；其对应的 response
+  type 为 opaque。
 
 ### isFile
 
 Type: `boolean`
 
-是否属于文件上传，如果是这样，会根据传递的data，创建一个FormData
+是否属于文件上传，如果是这样，会根据传递的 data，创建一个 FormData
 
 ### isUseOrigin
 
 Type: `boolean`
 
-为true时，直接返回response，不再处理结果。
-一般返回结果不是json对象，比如是流时需要设置此项。
+为 true 时，直接返回 response，不再处理结果。
+一般返回结果不是 json 对象，比如是流时需要设置此项。
 
 ### isEncodeUrl
 
 Type: `boolean`
 
-get请求时是否要进行浏览器编码
+get 请求时是否要进行浏览器编码
 
 ### signal
 
@@ -193,14 +199,14 @@ Type: `number`
 缓存时间
 
 - 如果是-1，代表不清除缓存。
-- 如果是0，代表不使用缓存。
-- 如果大于0，代表要缓存多长时间，单位是ms。
+- 如果是 0，代表不使用缓存。
+- 如果大于 0，代表要缓存多长时间，单位是 ms。
 
 ### originHeaders
 
 Type: `Headers`
 
-如果本身是在接口里进行的二次请求，传递原始的headers
+如果本身是在接口里进行的二次请求，传递原始的 headers
 
 ### defaultInjectHeaderKeys
 
@@ -209,7 +215,7 @@ Type: `string[]`
 Default:
 `["x-request-id", "x-b3-traceid", "x-b3-spanid", "x-b3-parentspanid", "x-b3-sampled"]`
 
-配合originHeaders使用，如果有这几个字段，将会默认注入
+配合 originHeaders 使用，如果有这几个字段，将会默认注入
 
 ### cacheStore
 
@@ -234,7 +240,8 @@ export class LocalStore implements ICacheStore {
     if (val) {
       const json = JSON.parse(val) as LocalValue;
       // console.log("get json", json);
-      if (json.td && Date.now() >= json.td) { // expired
+      if (json.td && Date.now() >= json.td) {
+        // expired
         // console.debug(`Cache expired: ${key} and will be deleted`);
         this.delete(key);
         return;
@@ -280,6 +287,6 @@ export class LocalStore implements ICacheStore {
 
 Type: `number`
 
-`revalidateTime`是指在缓存仍在有效期时，后台重新请求接口以更新缓存的时间间隔。单位是ms。
+`revalidateTime`是指在缓存仍在有效期时，后台重新请求接口以更新缓存的时间间隔。单位是 ms。
 
 如果配置了`revalidateTime`，会优先响应缓存，适用于对实时性没有那么高的特殊场景，比如官网。

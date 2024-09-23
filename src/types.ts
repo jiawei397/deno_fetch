@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any no-explicit-any
-import { FetchError } from "../mod.ts";
+import type { FetchError } from "../mod.ts";
 
 type MethodLowerCase = "get" | "delete" | "post" | "put";
 export type Method = Uppercase<MethodLowerCase> | MethodLowerCase;

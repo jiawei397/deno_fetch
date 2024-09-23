@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { encode, Hash } from "../deps.ts";
+import { encodeHex } from "@std/encoding";
 
 export function jsonParse(str: any) {
   try {
@@ -20,7 +20,7 @@ export function deleteUndefinedProperty(obj: any) {
 }
 
 export function md5(str: string) {
-  return new Hash("md5").digest(encode(str)).hex();
+  return encodeHex(str);
 }
 
 export function resolveUrl(url: string, baseURL?: string) {

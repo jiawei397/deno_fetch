@@ -1,18 +1,12 @@
 // deno-lint-ignore-file no-explicit-any
 // Copyright 2018-2021 the oak authors. All rights reserved. MIT license.
-import {
-  assert,
-  assertEquals,
-  assertThrows,
-  beforeEach,
-  delay,
-  describe,
-  it,
-  mf,
-} from "../test_deps.ts";
-import { AjaxConfig, ICacheStore, Method } from "./types.ts";
+import { assert, assertEquals, assertThrows } from "@std/assert";
+import type { AjaxConfig, ICacheStore, Method } from "./types.ts";
 import { Ajax } from "./ajax.ts";
-import { LocalStore, LocalValue } from "./store.ts";
+import { LocalStore, type LocalValue } from "./store.ts";
+import { beforeEach, describe, it } from "@std/testing/bdd";
+import * as mf from "@hongminhee/deno-mock-fetch";
+import { delay } from "@std/async/delay";
 
 describe("ajax", () => {
   function mock() {
@@ -43,22 +37,28 @@ describe("ajax", () => {
       requestCount = 0;
       responseCount = 0;
 
-      ajax.interceptors.request.use(function (mergedConfig) {
-        requestCount++;
-        return mergedConfig;
-      }, function (err) {
-        requestCount++;
-        return Promise.reject(err);
-      });
+      ajax.interceptors.request.use(
+        function (mergedConfig) {
+          requestCount++;
+          return mergedConfig;
+        },
+        function (err) {
+          requestCount++;
+          return Promise.reject(err);
+        }
+      );
 
       // 响应拦截
-      ajax.interceptors.response.use(function (data) {
-        responseCount++;
-        return data;
-      }, function (err) {
-        responseCount++;
-        return Promise.reject(err);
-      });
+      ajax.interceptors.response.use(
+        function (data) {
+          responseCount++;
+          return data;
+        },
+        function (err) {
+          responseCount++;
+          return Promise.reject(err);
+        }
+      );
     });
 
     it("once", async () => {
@@ -93,11 +93,11 @@ describe("ajax", () => {
   });
 });
 
-Deno.test('test response number', async (it) => {
+Deno.test("test response number", async (it) => {
   function mock() {
     mf.install();
     mf.mock("GET@/api/", () => {
-      return new Response('5', {
+      return new Response("5", {
         status: 200,
       });
     });
@@ -109,10 +109,10 @@ Deno.test('test response number', async (it) => {
 
   const request = () => ajax.get("http://localhost/api/");
 
-  await it.step('response number not tranfer', async () => {
+  await it.step("response number not tranfer", async () => {
     const res = await request();
     assertEquals(res, "5");
-    assertEquals(typeof res, 'string');
+    assertEquals(typeof res, "string");
   });
 });
 
@@ -168,7 +168,7 @@ Deno.test("test responseHeaderKeys", async (it) => {
       null,
       {
         responseHeaderKeys: ["Content-Type", "Content-Length"],
-      },
+      }
     );
     assertEquals(callStacks, [2]);
     assertEquals(res, {
@@ -194,7 +194,7 @@ Deno.test("test responseHeaderKeys", async (it) => {
       {
         responseHeaderKeys: ["Content-Type", "Content-Length"],
         cacheTimeout: 1000,
-      },
+      }
     );
     assertEquals(callStacks, [2]);
     assertEquals(res, {
@@ -211,7 +211,7 @@ Deno.test("test responseHeaderKeys", async (it) => {
       {
         responseHeaderKeys: ["Content-Type", "Content-Length"],
         cacheTimeout: 1000,
-      },
+      }
     );
     assertEquals(callStacks, [2]);
     assertEquals(res2, {
@@ -296,18 +296,22 @@ Deno.test("error should not cached", async (it) => {
   await it.step("not cached by set cachetimeout", async () => {
     const ajax = new Ajax();
 
-    await ajax.get("http://localhost/error2/", null, {
-      cacheTimeout: 1000,
-    }).catch(() => {
-      callStacks.push(1);
-    });
+    await ajax
+      .get("http://localhost/error2/", null, {
+        cacheTimeout: 1000,
+      })
+      .catch(() => {
+        callStacks.push(1);
+      });
     assertEquals(callStacks, [2, 1]);
 
-    await ajax.get("http://localhost/error2/", null, {
-      cacheTimeout: 1000,
-    }).catch(() => {
-      callStacks.push(3);
-    });
+    await ajax
+      .get("http://localhost/error2/", null, {
+        cacheTimeout: 1000,
+      })
+      .catch(() => {
+        callStacks.push(3);
+      });
     assertEquals(callStacks, [2, 1, 2, 3], "will not be cached");
 
     callStacks.length = 0;
@@ -391,7 +395,8 @@ Deno.test("use cache store", async (it) => {
         callStacks.push(5);
         const json = JSON.parse(val) as LocalValue;
         // console.log("get json", json);
-        if (json.td && Date.now() >= json.td) { // expired
+        if (json.td && Date.now() >= json.td) {
+          // expired
           callStacks.push(6);
           // console.debug(`Cache expired: ${key} and will be deleted`);
           this.delete(key);

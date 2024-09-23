@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { ICacheStore } from "./types.ts";
+import type { ICacheStore } from "./types.ts";
 
 export interface LocalValue {
   td: number | undefined;
@@ -17,7 +17,8 @@ export class LocalStore implements ICacheStore {
     if (val) {
       const json = JSON.parse(val) as LocalValue;
       // console.log("get json", json);
-      if (json.td && Date.now() >= json.td) { // expired
+      if (json.td && Date.now() >= json.td) {
+        // expired
         // console.debug(`Cache expired: ${key} and will be deleted`);
         this.delete(key);
         return;
