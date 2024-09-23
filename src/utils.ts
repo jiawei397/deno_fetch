@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { encodeHex } from "@std/encoding";
+import { md5 as md } from "@takker/md5";
 
 export function deleteUndefinedProperty(obj: any): void {
   for (const key in obj) {
@@ -12,7 +13,7 @@ export function deleteUndefinedProperty(obj: any): void {
 }
 
 export function md5(str: string): string {
-  return encodeHex(str);
+  return encodeHex(md(str));
 }
 
 export function resolveUrl(url: string, baseURL?: string): string {
