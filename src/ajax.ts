@@ -21,7 +21,7 @@ class Interceptors<T, E> {
     this.chain = [];
   }
 
-  use(callback: T, errorCallback: E) {
+  use(callback: T, errorCallback: E): number {
     this.chain.push(callback, errorCallback);
     return this.chain.length - 2;
   }
@@ -89,18 +89,21 @@ export class Ajax {
     this.logger = this.defaultConfig.logger || console;
   }
 
-  public interceptors = {
-    request: new Interceptors<RequestCallback, ErrorRequestCallback>(),
-    response: new Interceptors<ResponseCallback, ErrorResponseCallback>(),
+  public interceptors: {
+    request: Interceptors<RequestCallback, ErrorRequestCallback>;
+    response: Interceptors<ResponseCallback, ErrorResponseCallback>;
+  } = {
+    request: new Interceptors(),
+    response: new Interceptors(),
   };
 
-  public caches = new Map(); // 缓存所有已经请求的Promise，同一时间重复的不再请求
+  public caches: Map<string, any> = new Map(); // 缓存所有已经请求的Promise，同一时间重复的不再请求。TODO：类型可能有问题
 
-  public cachesTimeoutKeyMap = new Map<string, number>(); // 用于存储缓存的key的过期时间
-  public revalidateCacheTimeoutKeyMap = new Map<string, number>(); // 用于存储需要重新请求的key的过期时间
-  public fetchTimeoutKeys = new Set<number>(); // 用于存储fetch的key的过期时间
+  public cachesTimeoutKeyMap: Map<string, number> = new Map(); // 用于存储缓存的key的过期时间
+  public revalidateCacheTimeoutKeyMap: Map<string, number> = new Map(); // 用于存储需要重新请求的key的过期时间
+  public fetchTimeoutKeys: Set<number> = new Set(); // 用于存储fetch的key的过期时间
 
-  protected getUniqueKey(config: AjaxConfig) {
+  protected getUniqueKey(config: AjaxConfig): string {
     const headers = config.headers;
     const keys = [
       config.baseURL,
@@ -316,7 +319,7 @@ export class Ajax {
     }
   }
 
-  isAbortError(err: Error) {
+  isAbortError(err: Error): boolean {
     return err.name === "AbortError";
   }
 
@@ -562,7 +565,7 @@ export class Ajax {
     };
   }
 
-  get<T>(url: string, data?: AjaxGetData, options?: AjaxExConfig) {
+  get<T>(url: string, data?: AjaxGetData, options?: AjaxExConfig): Promise<T> {
     return this.ajax<T>({
       url,
       method: "get",
@@ -571,7 +574,14 @@ export class Ajax {
     });
   }
 
-  getWithHeaders<T>(url: string, data?: AjaxGetData, options?: AjaxExConfig) {
+  getWithHeaders<T>(
+    url: string,
+    data?: AjaxGetData,
+    options?: AjaxExConfig
+  ): Promise<{
+    data: T;
+    headers: Record<string, string | null>;
+  }> {
     if (!options?.responseHeaderKeys?.length) {
       throw new Error("responseHeaderKeys 不能为空");
     }
@@ -589,7 +599,11 @@ export class Ajax {
   /**
    * 调用ajax的get请求的同时，返回取消ajax请求的方法
    */
-  getAbortResult<T>(url: string, data?: AjaxGetData, options?: AjaxExConfig) {
+  getAbortResult<T>(
+    url: string,
+    data?: AjaxGetData,
+    options?: AjaxExConfig
+  ): AbortResult<T> {
     return this.ajaxAbortResult<T>({
       url,
       method: "get",
@@ -598,7 +612,7 @@ export class Ajax {
     });
   }
 
-  post<T>(url: string, data: AjaxPostData, options?: AjaxExConfig) {
+  post<T>(url: string, data: AjaxPostData, options?: AjaxExConfig): Promise<T> {
     return this.ajax<T>({
       url,
       method: "post",
@@ -607,7 +621,11 @@ export class Ajax {
     });
   }
 
-  postWithHeaders<T>(url: string, data: AjaxPostData, options?: AjaxExConfig) {
+  postWithHeaders<T>(
+    url: string,
+    data: AjaxPostData,
+    options?: AjaxExConfig
+  ): Promise<T> {
     if (!options?.responseHeaderKeys?.length) {
       throw new Error("responseHeaderKeys 不能为空");
     }
@@ -622,7 +640,11 @@ export class Ajax {
   /**
    * 调用ajax的post请求同时，返回取消ajax请求的方法
    */
-  postAbortResult<T>(url: string, data: AjaxPostData, options?: AjaxExConfig) {
+  postAbortResult<T>(
+    url: string,
+    data: AjaxPostData,
+    options?: AjaxExConfig
+  ): AbortResult<T> {
     return this.ajaxAbortResult<T>({
       url,
       method: "post",

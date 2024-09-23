@@ -1,23 +1,8 @@
 // Copyright 2018-2021 the oak authors. All rights reserved. MIT license.
 import { assert, assertEquals } from "@std/assert";
-import { deleteUndefinedProperty, jsonParse, resolveUrl } from "./utils.ts";
+import { deleteUndefinedProperty, resolveUrl } from "./utils.ts";
 
 const { test } = Deno;
-
-test({
-  name: "jsonParse",
-  fn() {
-    assertEquals(jsonParse("a"), "a");
-    assertEquals(jsonParse("1"), 1);
-    assertEquals(jsonParse(true), true);
-    assertEquals(jsonParse(false), false);
-    assertEquals(jsonParse(1), 1);
-    assertEquals(jsonParse({}), {});
-    assertEquals(jsonParse([]), []);
-    assertEquals(jsonParse(["a", "b"]), ["a", "b"]);
-    assertEquals(jsonParse(`{"a":"b"}`), { a: "b" });
-  },
-});
 
 test({
   name: "deleteUndefinedProperty",

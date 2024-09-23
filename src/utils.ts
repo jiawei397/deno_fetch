@@ -1,15 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { encodeHex } from "@std/encoding";
 
-export function jsonParse(str: any) {
-  try {
-    return JSON.parse(str);
-  } catch {
-    return str;
-  }
-}
-
-export function deleteUndefinedProperty(obj: any) {
+export function deleteUndefinedProperty(obj: any): void {
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       if (obj[key] === undefined) {
@@ -19,11 +11,11 @@ export function deleteUndefinedProperty(obj: any) {
   }
 }
 
-export function md5(str: string) {
+export function md5(str: string): string {
   return encodeHex(str);
 }
 
-export function resolveUrl(url: string, baseURL?: string) {
+export function resolveUrl(url: string, baseURL?: string): string {
   if (!baseURL) return url;
   if (url.startsWith("http")) {
     return url;

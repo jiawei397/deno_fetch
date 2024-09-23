@@ -12,7 +12,7 @@ export class LocalStore implements ICacheStore {
     this.timeoutMap = new Map<string, number>();
   }
 
-  get(key: string) {
+  get(key: string): any {
     const val = localStorage.getItem(key);
     if (val) {
       const json = JSON.parse(val) as LocalValue;

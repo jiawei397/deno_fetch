@@ -1,4 +1,4 @@
-import { Ajax, FetchError } from "./mod.ts";
+import { Ajax, type FetchError } from "./mod.ts";
 
 // Ajax.defaults.baseURL = "/api";
 
