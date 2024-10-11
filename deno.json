@@ -1,6 +1,6 @@
 {
   "name": "@jw397/fetch",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "exports": "./mod.ts",
   "license": "MIT",
   "tasks": {
