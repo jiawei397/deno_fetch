@@ -1,6 +1,6 @@
 # 封装的 fetch
 
-[![deno version](https://img.shields.io/badge/deno-^1.46.3-blue?logo=deno)](https://github.com/denoland/deno)
+[![deno version](https://img.shields.io/badge/deno-^2.0.0-blue?logo=deno)](https://github.com/denoland/deno)
 [![Deno](https://github.com/jiawei397/deno_fetch/actions/workflows/deno.yml/badge.svg)](https://github.com/jiawei397/deno_fetch/actions/workflows/deno.yml)
 
 ## 包含功能点
