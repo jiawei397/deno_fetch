@@ -29,7 +29,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v1
         with:
-          deno-version: v1
+          deno-version: v2
 
       # Uncomment this step to verify the use of 'deno fmt' on each commit.
       # - name: Verify formatting
@@ -40,6 +40,6 @@ jobs:
 
       - name: Run tests
         run: deno task test
-        
+
       - name: Publish package
         run: npx jsr publish
