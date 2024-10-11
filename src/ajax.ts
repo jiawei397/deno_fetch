@@ -13,6 +13,7 @@ import type {
   ResponseCallback,
 } from "./types.ts";
 import { deleteUndefinedProperty, md5, resolveUrl } from "./utils.ts";
+import { env } from "@gnome/env";
 
 class Interceptors<T, E> {
   public chain: any[];
@@ -39,9 +40,8 @@ export enum FetchErrorType {
 }
 
 export class FetchError extends Error {
-  name = "FetchError";
+  override name = "FetchError";
   originError?: any;
-  cause: any;
 
   constructor(
     message: string | Error | Record<string, any>,
@@ -78,7 +78,7 @@ export class Ajax {
       "x-b3-parentspanid",
       "x-b3-sampled",
     ],
-    isDebug: Deno.env.get("DEBUG") === "true",
+    isDebug: env.get("DEBUG") === "true",
   };
 
   defaultConfig: AjaxExConfig;
@@ -314,7 +314,7 @@ export class Ajax {
     } catch (err) {
       //代表网络异常
       return Promise.reject(
-        new FetchError(err, FetchErrorType.Network, config)
+        new FetchError(err as Error, FetchErrorType.Network, config)
       );
     }
   }
