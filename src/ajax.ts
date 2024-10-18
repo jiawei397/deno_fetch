@@ -168,7 +168,7 @@ export class Ajax {
   private handleGetUrl(url: string, data: AjaxGetData, isEncodeUrl?: boolean) {
     let tempUrl = url;
     if (typeof data === "object") {
-      const exArr = [];
+      const exArr: string[] = [];
       for (const key in data) {
         exArr.push(key + "=" + data[key]);
       }
