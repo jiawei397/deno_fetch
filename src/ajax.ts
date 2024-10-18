@@ -450,7 +450,7 @@ export class Ajax {
       return this.core_ajax(mergedConfig);
     }
     if (mergedConfig.isUseOrigin) {
-      this.logger.warn("使用origin时不允许缓存");
+      this.logger.warn("isUseOrigin is true, will not use cache");
       return this.core_ajax(mergedConfig);
     }
     const uniqueKey = this.getUniqueKey(mergedConfig);
@@ -582,7 +582,7 @@ export class Ajax {
     headers: Record<string, string | null>;
   }> {
     if (!options?.responseHeaderKeys?.length) {
-      throw new Error("responseHeaderKeys 不能为空");
+      throw new Error("responseHeaderKeys cannot be empty");
     }
     return this.ajax<{
       data: T;
@@ -626,7 +626,7 @@ export class Ajax {
     options?: AjaxExConfig
   ): Promise<T> {
     if (!options?.responseHeaderKeys?.length) {
-      throw new Error("responseHeaderKeys 不能为空");
+      throw new Error("responseHeaderKeys cannot be empty");
     }
     return this.ajax<T>({
       url,
