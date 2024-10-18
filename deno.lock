@@ -1,9 +1,6 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@cross/deepmerge@1": "1.0.0",
-    "jsr:@cross/env@^1.0.2": "1.0.2",
-    "jsr:@cross/runtime@1": "1.1.0",
     "jsr:@hongminhee/deno-mock-fetch@~0.3.2": "0.3.2",
     "jsr:@std/assert@^1.0.4": "1.0.5",
     "jsr:@std/assert@^1.0.5": "1.0.5",
@@ -18,19 +15,6 @@
     "jsr:@takker/md5@0.1": "0.1.0"
   },
   "jsr": {
-    "@cross/deepmerge@1.0.0": {
-      "integrity": "1e1318a74e31ba1959b9aa0acae8bd417b806f74ffd25ac07c90e12f83ad6b1d"
-    },
-    "@cross/env@1.0.2": {
-      "integrity": "28501ad1043c218a5b00fe5db27ec62c01ab16371bbe1b9d738496f0a7c5eeb8",
-      "dependencies": [
-        "jsr:@cross/deepmerge",
-        "jsr:@cross/runtime"
-      ]
-    },
-    "@cross/runtime@1.1.0": {
-      "integrity": "f35a3b768a9de125277329483b684062ffc9ee86f4449cb8b3d614adcad64ffb"
-    },
     "@hongminhee/deno-mock-fetch@0.3.2": {
       "integrity": "c92694dd885d2fecbcc032402774702852f0264ca444860383ee167dea4fffa6"
     },
@@ -77,7 +61,6 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cross/env@^1.0.2",
       "jsr:@hongminhee/deno-mock-fetch@~0.3.2",
       "jsr:@std/assert@^1.0.5",
       "jsr:@std/async@^1.0.5",

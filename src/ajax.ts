@@ -13,7 +13,6 @@ import type {
   ResponseCallback,
 } from "./types.ts";
 import { deleteUndefinedProperty, md5, resolveUrl } from "./utils.ts";
-import { getEnv } from "@cross/env";
 
 class Interceptors<T, E> {
   public chain: any[];
@@ -78,7 +77,7 @@ export class Ajax {
       "x-b3-parentspanid",
       "x-b3-sampled",
     ],
-    isDebug: getEnv("DEBUG") === "true",
+    isDebug: false,
   };
 
   defaultConfig: AjaxExConfig;
